@@ -21,3 +21,7 @@ source-repository-package
     type: git
     location: https://github.com/SamuelSchlesinger/hs-tls
     subdir: tls-session-manager
+
+source-repository-package
+    type: git
+    location: https://github.com/haskell-cryptography/boringssl-hs
