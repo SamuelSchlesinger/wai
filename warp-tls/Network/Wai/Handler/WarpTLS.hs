@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
@@ -84,9 +83,7 @@ import Network.Socket (
     Socket,
     close,
     getSocketName,
-#if MIN_VERSION_network(3,1,1)
     gracefulClose,
-#endif
     withSocketsDo,
  )
 import qualified Control.Exception as E
@@ -286,9 +283,7 @@ runTLSSocket' tlsset@TLSSettings{..} set credentials mgr sock =
             , TLS.serverHooks = hooks
             , TLS.serverShared = shared
             , TLS.serverSupported = supported
-#if MIN_VERSION_tls(1,5,0)
             , TLS.serverEarlyDataSize = 2018
-#endif
             }
     -- Adding alpn to user's tlsServerHooks.
     hooks =
@@ -312,9 +307,7 @@ runTLSSocket' tlsset@TLSSettings{..} set credentials mgr sock =
             , TLS.supportedSession = True
             , TLS.supportedFallbackScsv = True
             , TLS.supportedHashSignatures = tlsSupportedHashSignatures
-#if MIN_VERSION_tls(1,5,0)
             , TLS.supportedGroups = [TLS.X25519,TLS.P256,TLS.P384]
-#endif
             }
 
 alpn :: [S.ByteString] -> IO S.ByteString
@@ -398,12 +391,8 @@ httpOverTls TLSSettings{..} set s bs0 params =
     backend recvN =
         TLS.Backend
             { TLS.backendFlush = return ()
-#if MIN_VERSION_network(3,1,1)
             , TLS.backendClose =
                 gracefulClose s 5000 `E.catch` throughAsync (return ())
-#else
-            , TLS.backendClose = close s
-#endif
             , TLS.backendSend = sendAll' s
             , TLS.backendRecv = recvN
             }
@@ -446,11 +435,7 @@ attachConn mysa ctx = do
         recv = handle onEOF $ TLS.recvData ctx
           where
             onEOF e
-#if MIN_VERSION_tls(1,8,0)
                 | Just (TLS.PostHandshake TLS.Error_EOF) <- E.fromException e = return S.empty
-#else
-                | Just TLS.Error_EOF <- fromException e = return S.empty
-#endif
                 | Just ioe <- fromException e, isEOFError ioe = return S.empty
                 | otherwise = throwIO e
         sendfile fid offset len hook headers = do
