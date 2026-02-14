@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
@@ -476,14 +477,18 @@ getTLSinfo ctx = do
                     TLS.TLS11 -> (3, 2)
                     TLS.TLS12 -> (3, 3)
                     _ -> (3,4)
+#ifdef MIN_VERSION_crypton_x509
             clientCert <- TLS.getClientCertificateChain ctx
+#endif
             return
                 TLS
                     { tlsMajorVersion = major
                     , tlsMinorVersion = minor
                     , tlsNegotiatedProtocol = proto
                     , tlsChiperID = TLS.cipherID $ TLS.infoCipher info
+#ifdef MIN_VERSION_crypton_x509
                     , tlsClientCertificate = clientCert
+#endif
                     }
 
 tryIO :: IO a -> IO (Either IOException a)
